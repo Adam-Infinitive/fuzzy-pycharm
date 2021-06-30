@@ -1,14 +1,12 @@
 import pandas as pd
-import csv
 import warnings
 warnings.filterwarnings('ignore')
 warnings.simplefilter('ignore')
-from csv import reader
 
 # Import Data
 check_data = pd.read_csv('csv-data-main/check-data.csv', index_col=False)
 sample_data = pd.read_csv('csv-data-main/sample-data.csv', index_col=False)
-fraud_data = pd.read_csv('csv-data-main\\ssn-fraud-sample-data.csv', index_col=False)
+fraud_data = pd.read_csv('csv-data-main/ssn-fraud-sample-data.csv', index_col=False)
 
 
 def find_missing_values(check, sample):

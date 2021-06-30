@@ -1,169 +1,168 @@
 import psycopg2
-import sys
-import boto3
-import os
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 import csv
 import pandas as pd
-import checker as check
 
 ENDPOINT = "database-1.cluster-c5taqjr7582g.us-east-1.rds.amazonaws.com"
 PORT = "5432"
-USR = "asiwiec"
+USR = "postgres"
 REGION = "us-east-1"
 DBNAME = "postgres"
 
-conn = psycopg2.connect(host=ENDPOINT, port=PORT, database=DBNAME, user='postgres',
-                        password="Sonny51299?")  # ,ssl_ca='[full path]rds-combined-ca-bundle.pem')
+conn = psycopg2.connect(host=ENDPOINT, port=PORT, database=DBNAME, user=USR, password="Numpy12345#!")
 cur = conn.cursor()
-
 # auto commit changes
 conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
 
+
 # create table customers
-try:
-    cur.execute("""CREATE TABLE IF NOT EXISTS customers (
-    SSN int,
-    last_name varchar(30),
-    first_name varchar(30),
-    address varchar(150),
-    city varchar(40),
-    state varchar (2),
-    zip int,
-    primary key(SSN))""")
-except Exception as e:
-    print(f"Create table failed due to: {e}")
-
-# create table 'new_customers' - we will validate later if they are duplicates
-try:
-    cur.execute("""CREATE TABLE IF NOT EXISTS new_customers (
-    SSN int,
-    last_name varchar(30),
-    first_name varchar(30),
-    address varchar(150),
-    city varchar(40),
-    state varchar (2),
-    zip int,
-    primary key(SSN))""")
-except Exception as e:
-    print(f"Create table failed due to: {e}")
-
-# Insert initial data into customers
-# try:
-#     cur.execute(""" INSERT INTO customers values(
-#     100996544,
-#     'siwiec',
-#     'adam',
-#     '123 legacy drive',
-#     'palm beach',
-#     'FL',
-#     33410)
-#     """)
-# except Exception as e:
-#     print(f"Insert failed/values already exist: {e}")
-
-# Select all from Customers
-try:
-    cur.execute("""SELECT * FROM customers;""")
-    query_results = cur.fetchall()
-    print(query_results)
-except Exception as e:
-    print(f"select failed: {e}")
-
-# insert sample csv into table
-try:
-    with open(r'csv-data-main/sample-data.csv', 'r') as f:
-        reader=csv.reader(f)
-        next(reader)  # Skip the header row.
-        for row in reader:
-            cur.execute(
-                "INSERT INTO customers VALUES (%s, %s, %s, %s, %s, %s, %s)",
-                row
-            )
-    print("successful sample-data.csv insert")
-except Exception as e:
-    print(f"csv insert failed: {e}")
-
-# insert check csv into table
-try:
-    with open(r'csv-data-main/check-data.csv', 'r') as f:
-        reader=csv.reader(f)
-        next(reader)  # Skip the header row.
-        for row in reader:
-            cur.execute(
-                "INSERT INTO new_customers VALUES (%s, %s, %s, %s, %s, %s, %s)",
-                row
-            )
-    print("successful check-data.csv insert")
-except Exception as e:
-    print(f"csv insert failed: {e}")
-
-
-# select data from SQL and import into pandas df
-try:
-    SQL_Query = pd.read_sql_query(
-        '''select
-          SSN,
-          last_name,
-          first_name,
-          address,
-          city,
-          state,
-          zip
-          from customers''', conn)
-
-    customers_df=pd.DataFrame(SQL_Query, columns=['ssn', 'last_name', 'first_name', 'address', 'city', 'state', 'zip'])
-except Exception as e:
-    print(f"failed to insert into pandas df: {e}")
-
-print(customers_df)
-
-# select NEW customers data from SQL and import into pandas df
-try:
-    SQL_Query = pd.read_sql_query(
-        '''select
-          SSN,
-          last_name,
-          first_name,
-          address,
-          city,
-          state,
-          zip
-          from new_customers''', conn)
-
-    new_customers_df=pd.DataFrame(SQL_Query, columns=['ssn', 'last_name', 'first_name', 'address', 'city', 'state', 'zip'])
-except Exception as e:
-    print(f"failed to insert into pandas df: {e}")
-
-print(new_customers_df)
-
-# this doesn't work yet ##########################################
-
-#if new_customers do not exist customers table, insert them into customers
-def insert_df_customers(df):
-    ssn = df['ssn'].to_string(index=False)
+def create_tb_customers():
     try:
-        insert_sql = """INSERT INTO customers VALUES %s, %s, %s, %s, %s, %s, %s"""
-        cur.execute(insert_sql, (100886777, df['last_name'].to_string(index=False),
-                                 df['first_name'].to_string(index=False), df['address'].to_string(index=False),
-                    df['city'].to_string(index=False), df['state'].to_string(index=False), df['zip'].to_string(index=False)))
+        cur.execute("""CREATE TABLE IF NOT EXISTS customers (
+        SSN varchar(9),
+        last_name varchar(30),
+        first_name varchar(30),
+        address varchar(150),
+        city varchar(40),
+        state varchar (2),
+        zip varchar(5),
+        primary key(SSN))""")
+    except Exception as e:
+        print(f"Create table failed due to: {e}")
+
+
+# create table 'new_customers' - we will insert new_customers into customers if they do not already exist
+def create_tb_new_customers():
+    try:
+        cur.execute("""CREATE TABLE IF NOT EXISTS new_customers (
+        SSN varchar(9),
+        last_name varchar(30),
+        first_name varchar(30),
+        address varchar(150),
+        city varchar(40),
+        state varchar (2),
+        zip varchar(5),
+        primary key(SSN))""")
+    except Exception as e:
+        print(f"Create table failed due to: {e}")
+
+
+def select_all_customers():
+    try:
+        cur.execute("""SELECT * FROM customers;""")
+        query_results = cur.fetchall()
+        print(query_results)
+    except Exception as e:
+        print(f"select failed: {e}")
+
+
+def select_all_new_customers():
+    try:
+        cur.execute("""SELECT * FROM new_customers;""")
+        query_results = cur.fetchall()
+        print(query_results)
+    except Exception as e:
+        print(f"select failed: {e}")
+
+
+# insert customers csv into table
+def insert_customers_csv():
+    try:
+        with open(r'csv-data-main/sample-data.csv', 'r') as f:
+            reader=csv.reader(f)
+            next(reader)  # Skip the header row.
+            for row in reader:
+                cur.execute(
+                    "INSERT INTO customers VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                    row
+                )
+        print("successful sample-data.csv insert")
+    except Exception as e:
+        print(f"csv insert failed: {e}")
+
+
+# insert new_customers csv into table
+def insert_new_customers_csv():
+    try:
+        with open(r'csv-data-main/check-data.csv', 'r') as f:
+            reader=csv.reader(f)
+            next(reader)  # Skip the header row.
+            for row in reader:
+                cur.execute(
+                    "INSERT INTO new_customers VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                    row
+                )
+        print("successful check-data.csv insert")
+    except Exception as e:
+        print(f"csv insert failed: {e}")
+
+
+def find_missing_values(new_customers, customers):
+    result = new_customers[~new_customers.isin(customers)]
+    return result.dropna()
+
+
+# if new_customers do not exist customers table, insert them into customers
+def check_missing_customers():
+
+    # Select * from customers and import into pandas df
+    try:
+        select_query = pd.read_sql_query(
+            '''select
+              SSN,
+              last_name,
+              first_name,
+              address,
+              city,
+              state,
+              zip
+              from customers''', conn)
+
+        customers_df=pd.DataFrame(select_query, columns=['ssn', 'last_name', 'first_name', 'address', 'city', 'state', 'zip'])
+    except Exception as e:
+        print(f"Failed to insert customers into pandas df: {e}")
+
+    # Select * from new_customers and import into pandas df
+    try:
+        select_query = pd.read_sql_query(
+            '''select
+              SSN,
+              last_name,
+              first_name,
+              address,
+              city,
+              state,
+              zip
+              from new_customers''', conn)
+
+        new_customers_df=pd.DataFrame(select_query, columns=['ssn', 'last_name', 'first_name', 'address', 'city', 'state', 'zip'])
+    except Exception as e:
+        print(f"Failed to insert new_customers into pandas df: {e}")
+
+    try:
+        print("Checking for missing customers..")
+        missing_customers = find_missing_values(new_customers_df, customers_df)
+        print(missing_customers)
+        # if missing_customers:
+        print("Inserting missing customers into customers table...")
+        insert_missing_customers(missing_customers)
+    except Exception as e:
+        print(f"Error checking for missing customers: {e}")
+
+
+def insert_missing_customers(df):
+    tuples = [tuple(x) for x in df.to_numpy()]
+    print(tuples)
+    try:
+        insert_sql = """INSERT INTO customers VALUES(%s, %s, %s, %s, %s, %s, %s)"""
+        cur.executemany(insert_sql, tuples)
     except Exception as e:
         print(f"Error inserting values {e}")
-    # print(df)
-    # try:
-    #     cur.execute('''INSERT INTO customers VALUES df['ssn'], df['last_name'], df['first_name'], df['address'],
-    #     df['city'], df['state'], df['zip']''')
-    # except Exception as e:
-    #     print(f"Error inserting values {e}")
 
 
-try:
-    print("Checking for missing customers..")
-    missing_customers = check.find_missing_values(new_customers_df, customers_df)
-    print(missing_customers)
-    # if missing_customers:
-    print("Inserting missing customers into customers table...")
-    insert_df_customers(missing_customers)
-except:
-    print("error checking for missing customers")
-
+if __name__ == "__main__":
+    create_tb_customers()
+    create_tb_new_customers()
+    insert_customers_csv()
+    insert_new_customers_csv()
+    check_missing_customers()

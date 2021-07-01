@@ -97,12 +97,7 @@ def insert_new_customers_csv():
         print(f"csv insert failed: {e}")
 
 
-def find_missing_values(new_customers, customers):
-    result = new_customers[~new_customers.isin(customers)]
-    return result.dropna()
-
-
-# if new_customers do not exist customers table, insert them into customers
+# if new_customers do not exist customers table, insert them into customers !! Helper methods below !!
 def check_missing_customers():
 
     # Select * from customers and import into pandas df
@@ -143,11 +138,14 @@ def check_missing_customers():
         print("Checking for missing customers..")
         missing_customers = find_missing_values(new_customers_df, customers_df)
         print(missing_customers)
-        # if missing_customers:
-        print("Inserting missing customers into customers table...")
         insert_missing_customers(missing_customers)
     except Exception as e:
         print(f"Error checking for missing customers: {e}")
+
+
+def find_missing_values(new_customers, customers):
+    result = new_customers[~new_customers.isin(customers)]
+    return result.dropna()
 
 
 def insert_missing_customers(df):

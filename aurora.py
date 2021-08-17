@@ -2,14 +2,16 @@ import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 import csv
 import pandas as pd
+from auth import awscreds
 
-ENDPOINT = "database-1.cluster-c5taqjr7582g.us-east-1.rds.amazonaws.com"
+ENDPOINT = awscreds.ENDPOINT
 PORT = "5432"
-USR = "postgres"
+USR = awscreds.USR
 REGION = "us-east-1"
 DBNAME = "postgres"
+PASSWORD = awscreds.PASS
 
-conn = psycopg2.connect(host=ENDPOINT, port=PORT, database=DBNAME, user=USR, password="Numpy12345#!")
+conn = psycopg2.connect(host=ENDPOINT, port=PORT, database=DBNAME, user=USR, password=PASSWORD)
 cur = conn.cursor()
 # auto commit changes
 conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
